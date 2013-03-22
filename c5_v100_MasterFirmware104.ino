@@ -1,7 +1,7 @@
-// C5 v1.0.4 - PRODUCTION FIRMWARE
+// c5 v1.00 PRODUCTION FIRMWARE
 // ----------------------------------------------------------------------------
-// Version:     1.0.4 [Tested]
-// Date:        Jan 9, 2013
+// Version:     1.0.5 [Tested]
+// Date:        March 17, 2013
 // Authors:     John and Nick @ JDS Labs, Inc.
 // Requires:    Arduino Bootloader, Arduino 1.0.1
 // License:     Creative Commons Attribution-ShareAlike 3.0 Unported
@@ -55,10 +55,10 @@ void setup()
 
   digitalWrite(ENPOSREG, HIGH);                  // Enable +7V LDO
   digitalWrite(ENNEGREG, HIGH);                  // Enable -7V LDO
-  delay(50);                                     // Wait for power to stabilize
-  digitalWrite(PWRVOLLED, LOW);                  // Turn Power LED on
+  delay(200);                                     // Wait for power to stabilize
+  digitalWrite(PWRVOLLED, LOW);                  // Turn Power LED on, turn gain and bass LEDs off
   digitalWrite(POTPOWER, HIGH);                  // Enable DS1882 IC
-  delay(25); 
+  delay(50); 
   digitalWrite(GAIN, LOW);                      // Set gain HIGH
   
   
@@ -129,9 +129,9 @@ void loop()
     }  
     // Same method for decrementing attenuation (RAISES volume)
     if (downtemp == HIGH) {
-      delay(55);                                     
-      if ((downtemp == HIGH) && (attenuation > 0)) {
-          attenuation--;                              
+      delay(55);                                      // Simple debounce: wait and see if user actually pushed the button
+      if ((downtemp == HIGH) && (attenuation > 0)) {  // If user pressed button and volume isn't already at max.
+          attenuation--;                              // Decrease the potentiometer attenuation value
           changeVolume();
       }
     }
@@ -201,9 +201,9 @@ void changeLEDs()
 
 void checkBattery()
 {
-    BattVoltage = (float)analogRead(PREBOOST)*4.95/1023;   // Note: 4.95V is imperical value of C5 5V rail
+    BattVoltage = (float)analogRead(PREBOOST)*4.95/1023;   // Note: 4.95V is imperical value of c5 5V rail
     
-    if(BattVoltage > HighVoltageThreshold){                // Use of hysteresis to avoid erratic LED toggling.
+    if(BattVoltage > HighVoltageThreshold){                // Use of hysteresis to avoid erratic LED toggling
       flashState = LOW;                                    // flashState toggles if voltage is below the hysteresis threshold,
       lowBatt = false;                                     // lowBatt prevents flashState from toggling when above high threshold
     }
