@@ -13,4 +13,5 @@ Usage
 =========================
 
 1) Place "boards.txt" file in your "arduino\hardware\arduino" folder.
+
 2) Compile code and burn to C5 using any ISP compatible programmer.
