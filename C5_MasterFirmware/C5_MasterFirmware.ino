@@ -1,7 +1,7 @@
-// C5 v1.00 PRODUCTION FIRMWARE
+// C5 PRODUCTION FIRMWARE
 // ----------------------------------------------------------------------------
-// Version:     1.0.5 [Tested]
-// Date:        March 17, 2013
+// Version:     1.1.0 [Tested]
+// Date:        July 31, 2013
 // Authors:     John and Nick @ JDS Labs, Inc.
 // Requires:    Arduino Bootloader, Arduino 1.0.1
 // License:     Creative Commons Attribution-ShareAlike 3.0 Unported
@@ -37,10 +37,13 @@ int flashState = LOW;                             // Flashing power LED during l
 unsigned long lastMillis = 0;                     // Time of last battery check
 unsigned long volumeChangeTimer = 0;              // Time of Last Volume Change
 unsigned long gainChangeTimer = 0;                // Time of Last Gain Change
-unsigned long startTime = 0;                // Time of Last timer record
-
-
+unsigned long startTime = 0;                      // Time of Last timer record
 boolean lowBatt = false;                          // Low Battery Value
+
+// CONFIGURATION VARIABLES
+int VolDelay = 375;                               // Delay (milliseconds) before volume control quickly transitions through steps
+int StepPause = 55;                               // Delay (milliseconds) between each volume step in seek mode. Minimum value is 55ms, due to write time of DS1882
+
 
 void setup()
 {
@@ -57,11 +60,11 @@ void setup()
 
   digitalWrite(ENPOSREG, HIGH);                  // Enable +7V LDO
   digitalWrite(ENNEGREG, HIGH);                  // Enable -7V LDO
-  delay(200);                                     // Wait for power to stabilize
+  delay(200);                                    // Wait for power to stabilize
   digitalWrite(PWRVOLLED, LOW);                  // Turn Power LED on, turn gain and bass LEDs off
   digitalWrite(POTPOWER, HIGH);                  // Enable DS1882 IC
   delay(50); 
-  digitalWrite(GAIN, LOW);                      // Set gain HIGH
+  digitalWrite(GAIN, LOW);                       // Set gain HIGH
   
   
   Wire.begin();                                  // Join the I2C bus as master device
@@ -117,80 +120,71 @@ void loop()
     }
   }
   
-   // --------------Volume Control---------------
+    // --------------Volume Control---------------
     // First IF statement LOWERS volume. DS1808 has a range of 0-33; DS1882 has range of 0-63. So, for DS1882:
     //       attenuation = 0 = max volume
     //       attenuation = 62 = minimum volume
     //       attenuation = 63 = mute
     if (uptemp == HIGH || downtemp == HIGH) {
-      delay(55);                                      // Simple debounce: wait and see if user actually pushed the button
-      
+      delay(StepPause);                                // Simple debounce: wait and see if user actually pushed the button
       uptemp = digitalRead(upButton);                  // Update the up pushbutton
       downtemp = digitalRead(downButton);              // Update the down pushbutton
-  
-    //Here we begin checking if button was really pressed and dealing with the direction    
-      if ((uptemp == HIGH) && (attenuation < 63)) {   // If user pressed button and volume isn't already at min.
-          attenuation++;                              // Increase the potentiometer attenuation value
+                                                        
+      if ((uptemp == HIGH) && (attenuation < 63)) {   // Check if button was really pressed and dealing with the direction  
+          attenuation++;                              // If user pressed button and volume isn't already at min.
       }
 
       if ((downtemp == HIGH) && (attenuation > 0)) {  // If user pressed button and volume isn't already at max.
-          attenuation--;                 // Decrease the potentiometer attenuation value
+          attenuation--;                              // Decrease the potentiometer attenuation value
       }
-      //make initial volume change
-          changeVolume();   
+      
+      changeVolume();                                 // Perform initial volume change
+      startTime = millis();                           // Record starting time of volume seek
      
-      //set starting point for the 1 second delay    
-     startTime = millis();
-     
-     while((millis() - startTime) < 375){
-        //check to see if temp changed
-          uptemp = digitalRead(upButton);                  // Update the up pushbutton
-          downtemp = digitalRead(downButton);              // Update the down pushbutton
+     while((millis() - startTime) < VolDelay){        // Check to see if user changed button presses
+          uptemp = digitalRead(upButton);             // Update the up pushbutton
+          downtemp = digitalRead(downButton);         // Update the down pushbutton
           
-          //if temp changed, meaning button was let go, then break out and do nothing
+          // Exit loop if user releases button
           if ((uptemp != HIGH) && (downtemp != HIGH)){
             break;
           }
        }
       
-      //if button was not let go then go fast!
-      //volume up
-      if ((downtemp == HIGH) && (attenuation > 0)) {
+      if ((downtemp == HIGH) && (attenuation > 0)) {   // If button was not released, go Up fast
           do{
-            downtemp = digitalRead(downButton);              // Update the down pushbutton
-            delay(55);                          //delay 55 milliseconds between each step
-            attenuation--;                      //increment by one
-            changeVolume();                     //call volume change funtion
-          }while((downtemp == HIGH) && (attenuation > 0));    //checking to make sure number is within valid range
+            downtemp = digitalRead(downButton);        // Update the down pushbutton
+            delay(StepPause);                          // Delay between each step
+            attenuation--;                             // Increment attenuation
+            changeVolume();                            // Perform volume change
+          }while((downtemp == HIGH) && (attenuation > 0));    // Ensure attenuation is within valid range
       }
       
-      //if button was not let go then go fast!
-      //volume down
-      if ((uptemp == HIGH) && (attenuation > 0)) {
+      if ((uptemp == HIGH) && (attenuation < 63)) {    // If button was not released, go Down fast
           do{
-            uptemp = digitalRead(upButton);                  // Update the up pushbutton
-            delay(55);                          //delay 55 milliseconds between each step
-            attenuation++;                      //decrement by one
-            changeVolume();                     //call volume change funtion
-          }while((uptemp == HIGH) && (attenuation < 63));    //checking to make sure number is within valid range
+            uptemp = digitalRead(upButton);           // Update the up pushbutton
+            delay(StepPause);                         // Delay between each step
+            attenuation++;                            // Decrement attenuation
+            changeVolume();                           // Perform volume change
+          }while((uptemp == HIGH) && (attenuation < 63));    // Ensure attenuation is within valid range
       }
     }
     // -------------End Volume Control-------------
     
-  if ((millis() - lastMillis) > 500)                  // Checks battery voltage every 500mS
+  if ((millis() - lastMillis) > 500)                          // Checks battery voltage every 500mS
   {      checkBattery();
         lastMillis = millis();
   }
   
   if ((millis() - volumeChangeTimer > 2000) || (millis() - gainChangeTimer > 2000)){
          if (lastStoredAttenuation != attenuation){
-             EEPROM.write(0, attenuation);            // Store attenuation value in EEPROM location 0, wait 4ms for write to complete
+             EEPROM.write(0, attenuation);                  // Store attenuation value in EEPROM location 0, wait 4ms for write to complete
              delay(6);
              lastStoredAttenuation = attenuation;
              volumeChangeTimer = millis();
          }
          else if (lastStoredGainState != gainstate){    
-             EEPROM.write(1, gainstate);              // Store gain value in EEPROM location 1        
+             EEPROM.write(1, gainstate);                    // Store gain value in EEPROM location 1        
              delay(6);  
              lastStoredGainState = gainstate;
              gainChangeTimer = millis();  
