@@ -15,3 +15,11 @@ Usage
 1) Place "boards.txt" file in your "arduino\hardware\arduino" folder.
 
 2) Compile code and burn to C5 using any ISP compatible programmer.
+
+Change Log
+=========================
+v1.1.0: Replaced volume control logic to ensure 1dB volume control resolution.
+
+v1.0.5: Improved startup procedure 
+
+v1.0.4: Initial production firmware
