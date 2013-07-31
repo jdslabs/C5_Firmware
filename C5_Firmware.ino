@@ -1,4 +1,4 @@
-// c5 v1.00 PRODUCTION FIRMWARE
+// C5 v1.00 PRODUCTION FIRMWARE
 // ----------------------------------------------------------------------------
 // Version:     1.0.5 [Tested]
 // Date:        March 17, 2013
