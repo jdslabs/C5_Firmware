@@ -115,24 +115,67 @@ void loop()
     }
   }
   
-    // --------------Volume Control---------------
+   // --------------Volume Control---------------
     // First IF statement LOWERS volume. DS1808 has a range of 0-33; DS1882 has range of 0-63. So, for DS1882:
     //       attenuation = 0 = max volume
     //       attenuation = 62 = minimum volume
     //       attenuation = 63 = mute
-    if (uptemp == HIGH) {
+    if (uptemp == HIGH || downtemp == HIGH) {
       delay(55);                                      // Simple debounce: wait and see if user actually pushed the button
+      
+      uptemp = digitalRead(upButton);                  // Update the up pushbutton
+      downtemp = digitalRead(downButton);              // Update the down pushbutton
+  
+    //Here we begin checking if button was really pressed and dealing with the direction    
       if ((uptemp == HIGH) && (attenuation < 63)) {   // If user pressed button and volume isn't already at min.
           attenuation++;                              // Increase the potentiometer attenuation value
-          changeVolume();    
+          Serial.println(attenuation);
       }
-    }  
-    // Same method for decrementing attenuation (RAISES volume)
-    if (downtemp == HIGH) {
-      delay(55);                                      // Simple debounce: wait and see if user actually pushed the button
+
       if ((downtemp == HIGH) && (attenuation > 0)) {  // If user pressed button and volume isn't already at max.
-          attenuation--;                              // Decrease the potentiometer attenuation value
-          changeVolume();
+          attenuation--;                 // Decrease the potentiometer attenuation value
+          Serial.println(attenuation);
+      }
+      //make initial volume change
+          changeVolume();   
+     
+      //set starting point for the 1 second delay    
+     startTime = millis();
+     
+     while((millis() - startTime) < 375){
+        //check to see if temp changed
+          uptemp = digitalRead(upButton);                  // Update the up pushbutton
+          downtemp = digitalRead(downButton);              // Update the down pushbutton
+          
+          //if temp changed, meaning button was let go, then break out and do nothing
+          if ((uptemp != HIGH) && (downtemp != HIGH)){
+            Serial.println("Leaving quitely");
+            break;
+          }
+       }
+      
+      //if button was not let go then go fast!
+      //volume up
+      if ((downtemp == HIGH) && (attenuation > 0)) {
+          do{
+            downtemp = digitalRead(downButton);              // Update the down pushbutton
+            delay(55);                          //delay 55 milliseconds between each step
+            attenuation--;                      //increment by one
+            Serial.println("volume up fast");
+            changeVolume();                     //call volume change funtion
+          }while((downtemp == HIGH) && (attenuation > 0));    //checking to make sure number is within valid range
+      }
+      
+      //if button was not let go then go fast!
+      //volume down
+      if ((uptemp == HIGH) && (attenuation > 0)) {
+          do{
+            uptemp = digitalRead(upButton);                  // Update the up pushbutton
+            delay(55);                          //delay 55 milliseconds between each step
+            attenuation++;                      //decrement by one
+            Serial.println("volume up fast");
+            changeVolume();                     //call volume change funtion
+          }while((uptemp == HIGH) && (attenuation < 63));    //checking to make sure number is within valid range
       }
     }
     // -------------End Volume Control-------------
