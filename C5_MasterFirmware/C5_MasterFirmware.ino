@@ -37,6 +37,8 @@ int flashState = LOW;                             // Flashing power LED during l
 unsigned long lastMillis = 0;                     // Time of last battery check
 unsigned long volumeChangeTimer = 0;              // Time of Last Volume Change
 unsigned long gainChangeTimer = 0;                // Time of Last Gain Change
+unsigned long startTime = 0;                // Time of Last timer record
+
 
 boolean lowBatt = false;                          // Low Battery Value
 
