@@ -131,12 +131,10 @@ void loop()
     //Here we begin checking if button was really pressed and dealing with the direction    
       if ((uptemp == HIGH) && (attenuation < 63)) {   // If user pressed button and volume isn't already at min.
           attenuation++;                              // Increase the potentiometer attenuation value
-          Serial.println(attenuation);
       }
 
       if ((downtemp == HIGH) && (attenuation > 0)) {  // If user pressed button and volume isn't already at max.
           attenuation--;                 // Decrease the potentiometer attenuation value
-          Serial.println(attenuation);
       }
       //make initial volume change
           changeVolume();   
@@ -151,7 +149,6 @@ void loop()
           
           //if temp changed, meaning button was let go, then break out and do nothing
           if ((uptemp != HIGH) && (downtemp != HIGH)){
-            Serial.println("Leaving quitely");
             break;
           }
        }
@@ -163,7 +160,6 @@ void loop()
             downtemp = digitalRead(downButton);              // Update the down pushbutton
             delay(55);                          //delay 55 milliseconds between each step
             attenuation--;                      //increment by one
-            Serial.println("volume up fast");
             changeVolume();                     //call volume change funtion
           }while((downtemp == HIGH) && (attenuation > 0));    //checking to make sure number is within valid range
       }
@@ -175,7 +171,6 @@ void loop()
             uptemp = digitalRead(upButton);                  // Update the up pushbutton
             delay(55);                          //delay 55 milliseconds between each step
             attenuation++;                      //decrement by one
-            Serial.println("volume up fast");
             changeVolume();                     //call volume change funtion
           }while((uptemp == HIGH) && (attenuation < 63));    //checking to make sure number is within valid range
       }
