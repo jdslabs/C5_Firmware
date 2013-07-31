@@ -1,4 +1,4 @@
-C5 Master Firmware v1.1.0 (July 31, 2013)
+C5 Master Firmware v1.1.0
 =========================
 Production Firmware for @jdslabs C5 Headphone Amplifier - Controls DS1882 digital potentiometer
 
